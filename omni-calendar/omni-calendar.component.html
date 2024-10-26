@@ -1,0 +1,512 @@
+<main id="OmniCalendar">
+
+  <!--BEGINNING OF CALENDAR INTEGRATION-->
+  <div class="spinner-container" *ngIf="eventsIsBusy">
+		<app-spinner [color]="'#e86831'"></app-spinner>
+	</div>
+    <br>
+
+	<mat-menu #menu="matMenu" yPosition="above">
+
+    <!--
+      0 - Reservado
+      1 - En progreso // Check out
+      2 - Check in
+      3 - Cancelado
+      4 - Grading
+    -->
+    <ng-container *ngIf="currentUser.roleId !== 5">
+      <button mat-menu-item
+        class="schedule--mat-menu-button"
+        *ngIf="selectedCalendarEvent?.permissions?.showEditDetails"
+        (click)="openEventModal(selectedCalendarEvent);">
+        <img src="assets/img/icons/schedule_edit.svg" alt="">
+        <span>Edit details</span>
+      </button>
+
+      <button mat-menu-item
+        *ngIf="selectedCalendarEvent?.permissions?.showCancelFlight"
+        [disabled]="
+          selectedCalendarEvent.status !== 0 &&
+          selectedCalendarEvent.status !== 1
+        "
+        class="schedule--mat-menu-button"
+        (click)="cancelFlight('cancel');">
+        <img src="assets/img/icons/block.svg" alt="">
+        <span>Cancel Reservation</span>
+      </button>
+    </ng-container>
+
+      
+  </mat-menu>
+
+  <ng-container *ngIf="!eventsIsBusy">
+    <div *ngIf="selectedSection === 'General' || selectedSection === 'Schedule'">
+      <div class="row text-center">
+        <div class="col-md-4">
+          <div class="btn-group">
+            <button
+              class="btn btn-primary"
+
+              mwlCalendarPreviousView
+              [view]="view"
+              [(viewDate)]="viewDate"
+              (viewDateChange)="updateViewEvents($event)"
+            >
+              Previous
+            </button>
+            <button
+              class="btn btn-primary"
+
+              mwlCalendarToday
+              [(viewDate)]="viewDate"
+              (viewDateChange)="updateViewEvents($event)"
+            >
+              Today
+            </button>
+            <button
+              class="btn btn-primary"
+
+              mwlCalendarNextView
+              [view]="view"
+              [(viewDate)]="viewDate"
+              (viewDateChange)="updateViewEvents($event)"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+
+        <!-- Datepicker used if the calendar view is either 'week' or 'day' -->
+        <div class="col-md-4">
+          <input
+            matInput [matDatepicker]="dayWeekPicker"
+            class="form-control"
+            style="display: none;"
+            [(ngModel)]="viewDate"
+            (dateChange)="updateViewEvents($event)"
+          >
+          <mat-datepicker-toggle
+            class="btn btn-primary calendar"
+
+            matSuffix [for]="dayWeekPicker"
+          >
+          </mat-datepicker-toggle>
+          <mat-datepicker
+            touchUi
+            #dayWeekPicker
+            disabled="false"
+            startView="year"
+          >
+          </mat-datepicker>
+            <br><br>
+
+          <h3>
+            <b style = "color: #1391DF; font-size: 20px">
+              {{ viewDate | calendarDate:(view + 'ViewTitle'):'en' }}
+            </b>
+          </h3>
+        </div>
+
+        <div class="col-md-4">
+          
+          <div class="btn-group">
+            <button class="btn btn-primary btn--add-new"
+              *ngIf="
+                ('reservationsCreateOwn'                 | permission:auth.user) ||
+                ('reservationsCreateForOthers'           | permission:auth.user) ||
+                ('reservationsCreateForAssignedStudents' | permission:auth.user)
+              "
+              (click)="openEventModal();"
+            >
+              <div class="icon--add" [inlineSVG]="'assets/img/icon--add.svg'"></div>
+              Event
+            </button>
+            <!--<button
+              class="btn btn-primary"
+              id="monthButton"
+
+              (click)="setView(CalendarView.Month)"
+              [class.active]="view === CalendarView.Month"
+            >
+              Month
+            </button>
+            <button
+              class="btn btn-primary"
+              id="weekButton"
+
+              (click)="setView(CalendarView.Week)"
+              [class.active]="view === CalendarView.Week"
+            >
+              Week
+            </button>
+            <button
+              class="btn btn-primary"
+              id="dayButton"
+
+              (click)="setView(CalendarView.Day)"
+              [class.active]="view === CalendarView.Day"
+            >
+              Day
+            </button>-->
+          </div>
+        </div>
+      </div>
+        <br>
+
+
+      <!--
+        SCHEDULE DATA REFERENCE CODE:
+        <ng-container *ngSwitchCase="'lessonTypeId'">
+                {{ event.lessonTypeId | getObjectName: lessonTypes }}
+              </ng-container>
+              <ng-container *ngSwitchCase="'lesson'">
+                <ng-container *ngIf="(event.lessonTypeId !== 8 && event.lessonTypeId !== 13); else showCrewLessons">
+                  {{ event.lessonTitle }}
+                </ng-container>
+                <ng-template #showCrewLessons>
+                  <ul>
+                    <li *ngFor="let eventCrewMember of event.crew;">
+                      {{ eventCrewMember.lessonTitle }}
+                    </li>
+        <ng-container *ngSwitchCase="'start'">
+                {{ event.start | date: 'MM/dd/yyyy HH:mm' }}
+        </ng-container>
+        <ng-container *ngSwitchCase="'end'">
+                {{ event.end | date: 'MM/dd/yyyy HH:mm' }}
+        </ng-container>
+      -->
+      
+      <div [ngSwitch]="view">
+        <mwl-calendar-month-view
+          *ngSwitchCase="CalendarView.Month"
+          [viewDate]="viewDate"
+          [events]="calEvents"
+          [refresh]="refresh"
+          [cellTemplate]="customCellTemplate"
+        >
+
+          <ng-template #customCellTemplate let-day="day" let-locale="locale">
+            <div class="cal-cell-top">
+              <span class="cal-day-badge" *ngIf="day.badgeTotal === 0"
+                style="background-color: #cbd1e5"
+              >
+                {{ day.badgeTotal }}
+              </span>
+
+              <span class="cal-day-badge" *ngIf="day.badgeTotal > 0">
+                {{ day.badgeTotal }}
+              </span>
+              <span class="cal-day-number" style="margin: 13px">
+                <b>
+                  {{ day.date | calendarDate:'monthViewDayNumber':locale }}
+                </b>
+              </span>
+                <br><br><br>
+
+              <ng-container *ngFor="let event of calEvents">
+                <div *ngIf="((event.meta.start.toDateString() === day.date.toDateString()
+                  || event.meta.end.toDateString() === day.date.toDateString()) || (event.meta.start.getTime() <= (day.date.getTime()+8629000) && event.meta.end.getTime() >= (day.date.getTime()+8629000) ))
+                  && event.meta.cancelTypeId == 0"
+                >
+                <!-- FOR EVENTS THAT START AND END ON THE SAME DAY -->
+                <ng-container *ngIf="event.meta.start.toDateString() === event.meta.end.toDateString()">
+                  <div
+                    class = "card reservation"
+                    [class.schedOmatic]="pendingEvents?.length > 0"
+                  >
+                    <span>
+                      <h5 class = "card-title" *ngIf="event.meta.lessonTypeId > 0">
+                        <b>
+                          {{ lessonName[event.meta.lessonTypeId] }} / {{ event.meta.start | date: 'HH:mm' }} - {{ event.meta.end | date: 'HH:mm' }}
+                        </b>
+                        <button *ngIf="pendingEvents?.length == 0 && currentUser.roleId !== 5"
+                          class="icon-btn icon-btn--details"
+                          (click)="selectedCalendarEvent = event.meta;"
+                          [disabled]="event.meta.status === 3"
+                          mat-icon-button
+                          [matMenuTriggerFor]="menu"
+                        >
+                          <span style = "color: #1391DF;" class="material-icons">edit</span>
+                        </button>
+                      </h5>
+                    </span>
+                    <h5 class="card-title" *ngIf="pendingEvents?.length == 0">
+                      <b *ngIf="event.meta.clientId > 0 && event.meta.client?.lastName">
+                        {{ event.meta.client.lastName }}
+                      </b>
+                      <b *ngIf="event.meta.clientId > 0 && event.meta.instructorId > 0">
+                        /
+                      </b>
+                      <b *ngIf="event.meta.instructorId > 0">
+                        {{ event.meta.instructorName.split(" ")[1] }}
+                      </b>
+                    </h5>
+                    <h5 class="card-title" *ngIf="pendingEvents?.length > 0">
+                      <b>
+                        {{ event.meta.name }}
+                      </b>
+                    </h5>
+                  </div>
+                </ng-container>
+
+
+                <!-- FOR EVENTS THAT DO NOT START AND END ON THE SAME DAY -->
+                <ng-container *ngIf="event.meta.start.toDateString() != event.meta.end.toDateString()">
+                  <div
+                    class = "card"
+                    style = "background-color: #f1bd63; margin-left: 0px"
+                  >
+                    <span style = "color: red; margin-bottom: 5px">
+                      <h5 class = "card-title">
+                        <b>
+                          <img src="assets/img/icons/icon-warning-issues.svg" width="20px" height="20px">
+                          The following event spans multiple days!
+                        </b>
+                      </h5>
+                    </span>
+
+                    <span>
+                      <h5 class = "card-title" *ngIf="event.meta.lessonTypeId > 0">
+                        <b>
+                          {{ lessonName[event.meta.lessonTypeId] }} / {{ event.meta.start | date: 'MM/dd/yyyy HH:mm' }} - {{ event.meta.end | date: 'MM/dd/yyyy HH:mm' }}
+                        </b>
+                          <button *ngIf="currentUser.roleId !== 5"
+                            class="icon-btn icon-btn--details"
+                            (click)="selectedCalendarEvent = event.meta;"
+                            [disabled]="event.meta.status === 3"
+                            mat-icon-button
+                            [matMenuTriggerFor]="menu"
+                          >
+                            <span style = "color: #1391DF;" class="material-icons">edit</span>
+                          </button>
+                      </h5>
+                    </span>
+                    <h5 class = "card-title">
+                      <b *ngIf="event.meta.clientId > 0">
+                        {{ event.meta.client.lastName }}
+                      </b>
+                      <b *ngIf="event.meta.clientId > 0 && event.meta.instructorId > 0">
+                        /
+                      </b>
+                      <b *ngIf="event.meta.instructorId > 0">
+                        {{ event.meta.instructorName.split(" ")[1] }}
+                      </b>
+                    </h5>
+
+                  </div>
+                </ng-container>
+
+                </div>
+              </ng-container>
+            </div>
+          </ng-template>
+        </mwl-calendar-month-view>
+
+
+        <!-- Temporary disabled to enable later when defining if this views are required -->
+      <!--
+        <mwl-calendar-week-view
+          *ngSwitchCase="CalendarView.Week"
+          [viewDate]="viewDate"
+          [events]="events"
+          [refresh]="refresh"
+          (eventClicked)="handleEvent('Clicked', $event.event)"
+          (eventTimesChanged)="eventTimesChanged($event)"
+          [hourSegmentTemplate]="custom"
+          [eventTemplate]="customWeekEventTemplate"
+        >
+          <ng-template #customWeekEventTemplate let-weekEvent="weekEvent" let-locale="locale" let-column="column">
+
+            <div class="cal-event" *ngIf="weekEvent.event.start.toDateString()===weekEvent.event.end.toDateString() && weekEvent.event.cancelTypeId == 0"
+              style="background-color:rgb(180, 215, 127); font-size: 16px; margin: 2px; min-height: 35px; overflow: auto visible; text-align: center"
+            >
+
+              <ng-container>
+                  <span style=" margin-top: 5px">
+                    <b *ngIf="weekEvent.event.lessonTypeId > 0">
+                      {{ lessonName[weekEvent.event.lessonTypeId] }}
+                    </b>
+                    <div>
+                      <b>
+                        {{weekEvent.event.start | date: 'HH:mm'}} - {{weekEvent.event.end | date: 'HH:mm'}}
+                      </b>
+                      <button
+                        class="icon-btn icon-btn--details"
+                        (click)="selectedCalendarEvent = weekEvent.event;"
+                        [disabled]="weekEvent.event.status === 3"
+                        mat-icon-button
+                        [matMenuTriggerFor]="menu"
+                      >
+                        <span  style = "color: #1391DF;" class="material-icons">edit</span>
+                      </button>
+                    </div>
+                  </span>
+
+                  <span style="text-align: center">
+                    <b *ngIf="weekEvent.event.clientId > 0">
+                      {{ weekEvent.event.client.lastName }}
+                    </b>
+                    <b *ngIf="weekEvent.event.clientId > 0 && weekEvent.event.instructorId > 0">
+                      /
+                    </b>
+                    <b *ngIf="weekEvent.event.instructorId > 0">
+                      {{ weekEvent.event.instructorName.split(" ")[1] }}
+                    </b>
+                  </span>
+              </ng-container>
+
+            </div>
+
+
+            <div class="cal-event" *ngIf="weekEvent.event.start.toDateString()!=weekEvent.event.end.toDateString() && weekEvent.event.cancelTypeId == 0"
+                style="background-color:#f1bd63; font-size: 16px; margin: 2px; text-align: center"
+              >
+                <div class="scrollmenu" style="overflow: auto">
+                  <span style = "color: red; margin-bottom: 5px">
+                    <h7>
+                      <b>
+                        <img src="assets/img/icons/icon-warning-issues.svg" width="20px" height="20px">
+                        The following event spans multiple days!
+                      </b>
+                    </h7>
+                  </span>
+                    <br><br>
+
+                  <span style=" margin-top: 5px;">
+                    <b *ngIf="weekEvent.event.lessonTypeId > 0">
+                      {{ lessonName[weekEvent.event.lessonTypeId] }}
+                    </b>
+                    <div>
+                      <b>
+                        {{ weekEvent.event.start | date: 'MM/dd/yyyy HH:mm' }} - {{ weekEvent.event.end | date: 'MM/dd/yyyy HH:mm' }}
+                      </b>
+                      <button
+                        class="icon-btn icon-btn--details"
+                        (click)="selectedCalendarEvent = weekEvent.event;"
+                        [disabled]="weekEvent.event.status === 3"
+                        mat-icon-button
+                        [matMenuTriggerFor]="menu"
+                      >
+                        <span  style = "color: #1391DF;" class="material-icons">edit</span>
+                      </button>
+                    </div>
+                  </span>
+
+                  <span style="color: #545d8e; text-align: center">
+                    <b *ngIf="weekEvent.event.clientId > 0">
+                      {{ weekEvent.event.client.lastName }}
+                    </b>
+                    <b *ngIf="weekEvent.event.clientId > 0 && weekEvent.event.instructorId > 0">
+                      /
+                    </b>
+                    <b *ngIf="weekEvent.event.instructorId > 0">
+                      {{ weekEvent.event.instructorName.split(" ")[1] }}
+                    </b>
+                  </span>
+              </div>
+            </div>
+          </ng-template>
+        </mwl-calendar-week-view> -->
+
+
+      <!--  <mwl-calendar-day-view
+          *ngSwitchCase="CalendarView.Day"
+          [viewDate]="viewDate"
+          [events]="events"
+          [refresh]="refresh"
+          (eventClicked)="handleEvent('Clicked', $event.event)"
+          (eventTimesChanged)="eventTimesChanged($event)"
+          [eventTemplate]="customDayEventTemplate"
+        >
+          <ng-template #customDayEventTemplate let-weekEvent="weekEvent" let-locale="locale">
+            <div class="cal-event" *ngIf="weekEvent.event.start.toDateString()===weekEvent.event.end.toDateString() && weekEvent.event.cancelTypeId == 0"
+              style="background-color:rgb(180, 215, 127); font-size: 16px; min-height: 44px; overflow: auto visible; text-align: center;"
+            >
+              <span style="margin-top: 5px;">
+                <b *ngIf="weekEvent.event.lessonTypeId > 0">
+                  {{ lessonName[weekEvent.event.lessonTypeId] }}
+                </b>
+                <div>
+                  <b>
+                    {{weekEvent.event.start | date: 'HH:mm'}} - {{weekEvent.event.end | date: 'HH:mm'}}
+                  </b>
+                  <button
+                    class="icon-btn icon-btn--details"
+                    (click)="selectedCalendarEvent = weekEvent.event;"
+                    [disabled]="weekEvent.event.status === 3"
+                    mat-icon-button
+                    [matMenuTriggerFor]="menu"
+                  >
+                    <span  style = "color: #1391DF;" class="material-icons">edit</span>
+                  </button>
+                </div>
+              </span>
+
+              <span>
+                <b *ngIf="weekEvent.event.clientId > 0">
+                {{ weekEvent.event.client.lastName }}
+              </b>
+              <b *ngIf="weekEvent.event.clientId > 0 && weekEvent.event.instructorId > 0">
+                /
+              </b>
+              <b *ngIf="weekEvent.event.instructorId > 0">
+                {{ weekEvent.event.instructorName.split(" ")[1] }}
+              </b>
+              </span>
+            </div>
+
+            <div class="cal-event" *ngIf="weekEvent.event.start.toDateString()!=weekEvent.event.end.toDateString() && weekEvent.event.cancelTypeId == 0"
+              style="background-color:#f1bd63; font-size: 16px; margin: 2px; text-align: center"
+            >
+              <span style = "color: red; margin-bottom: 5px">
+                <h7>
+                  <b>
+                    <img src="assets/img/icons/icon-warning-issues.svg" width="20px" height="20px">
+                    The following event spans multiple days!
+                  </b>
+                </h7>
+              </span>
+                <br><br>
+              <span style=" margin-top: 5px;">
+                <b *ngIf="weekEvent.event.lessonTypeId > 0">
+                  {{ lessonName[weekEvent.event.lessonTypeId] }}
+                </b>
+                <div>
+                  <b>
+                    {{ weekEvent.event.start | date: 'MM/dd/yyyy HH:mm' }} - {{ weekEvent.event.end | date: 'MM/dd/yyyy HH:mm' }}
+                  </b>
+                  <button
+                    class="icon-btn icon-btn--details"
+                    (click)="selectedCalendarEvent = weekEvent.event;"
+                    [disabled]="weekEvent.event.status === 3"
+                    mat-icon-button
+                    [matMenuTriggerFor]="menu"
+                  >
+                    <span  style = "color: #1391DF;" class="material-icons">edit</span>
+                  </button>
+                </div>
+              </span>
+
+              <span style="text-align: center">
+                <b *ngIf="weekEvent.event.clientId > 0">
+                  {{ weekEvent.event.client.lastName }}
+                </b>
+                <b *ngIf="weekEvent.event.clientId > 0 && weekEvent.event.instructorId > 0">
+                  /
+                </b>
+                <b *ngIf="weekEvent.event.instructorId > 0">
+                  {{ weekEvent.event.instructorName.split(" ")[1] }}
+                </b>
+              </span>
+            </div>
+          </ng-template>
+        </mwl-calendar-day-view> -->
+
+
+      </div>
+    </div>
+  </ng-container>
+    
+
+</main>

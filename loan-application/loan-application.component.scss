@@ -1,0 +1,332 @@
+@import './../../../../../assets/styles/colors';
+@import './../../../../../assets/styles/header';
+@import './../../../../../assets/styles/forms';
+@import './../../../../../assets/styles/table';
+@import './../../../../../assets/styles/responsive';
+@import './../../../../../assets/styles/single-element';
+
+.card {
+    padding: 1.3rem;
+    border: unset;
+
+    div.input-container {
+        flex-basis: calc(50% - 0.5rem);
+        flex-grow: unset;
+    }
+
+    input {
+
+        &.ng-valid {
+            border: .1rem solid color(primary);
+        }
+
+        &.ng-invalid.ng-touched {
+            border: .1rem solid color(warning);
+        }
+    }
+
+    app-date-input {
+
+        input {
+
+            &.ng-valid {
+                border: .1rem solid color(primary);
+            }
+    
+            &.ng-invalid.ng-touched {
+                border: .1rem solid color(warning);
+            }
+        }
+    }
+
+
+    .buttons-container {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+        border-radius: 3rem;
+        border-style:solid;
+        border-color: color(primary);
+        background-color: color(dark, light);
+        padding: 1rem;
+
+        button.btn-primary {
+            //background-color: color(light, light);
+            //color: color(primary);
+            align-items: center;
+            display: flex;
+            //margin-top: 2rem;
+        }
+
+
+        .loan-count-container {
+            display: block;
+
+            .loan-add-button {
+                display: flex;
+                justify-content: center;
+                background-color: color(primary);
+                border-radius: 2rem;
+                padding: 0.2rem 0.5rem;
+
+                &:hover {
+                    background-color: color(secondary);
+
+                    mat-icon {
+                        background-color: color(light, light);
+                    }
+                }
+
+                &:disabled {
+                    background-color: color(secondary);
+                }
+
+                mat-icon {
+                    display: contents;
+                    font-size: xx-large;
+                    border-radius: 0.5rem;
+                    color: color(light, light);
+                }
+
+                span {
+                    background-color: color(secondary);
+                    font-size: 2rem;
+                }
+            }
+
+            .loan-count-button {
+                display: flex;
+                justify-content: center;
+                background-color: color(primary);
+                border-radius: 2rem;
+                padding: 0.2rem 0.5rem;
+
+                &:hover {
+                    background-color: color(secondary);
+
+                    mat-icon {
+                        background-color: color(light, light);
+                    }
+                }
+                
+                &[disabled] {
+                    cursor: not-allowed;
+                    background-color: color(gray) !important;
+                    color: white;
+                    pointer-events: auto !important;
+                    opacity: 1 !important;
+        
+                    &:hover {
+                        background-color: color(gray);
+                        border-color: color(gray);
+                    }
+                }
+
+                mat-icon {
+                    display: contents;
+                    font-size: xx-large;
+                    border-radius: 0.5rem;
+                    color: color(light, light);
+
+                }
+
+                span {
+                    background-color: color(secondary);
+                    font-size: 1.2rem;
+                }
+            }
+        }
+            
+    }
+
+    /*.saved-notes-container {
+        display: flex;
+        flex-direction: row-reverse;
+        margin-top: 1rem;
+        width: 100%;
+
+        .icon-btn {
+            height: 1.8rem;
+            width: 1.8rem;
+            min-width: 1.8rem;
+            min-height: 1.8rem;
+            margin-top: .1rem;
+            color: color(light, light);
+            background-color: color(primary) !important;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+    
+            &:hover{
+                background-color: color(secondary, light) !important;
+            }
+    
+            &[disabled] {
+                cursor: not-allowed;
+                background-color: color(gray) !important;
+                color: white;
+                pointer-events: auto !important;
+                opacity: 1 !important;
+    
+                &:hover {
+                    background-color: color(gray);
+                    border-color: color(gray);
+                }
+            }
+        }
+
+
+
+        mat-accordion {
+            width: inherit;
+            
+            mat-expansion-panel {
+                background-color: color(primary, base);
+                color: color(light, light);
+                font-size: 1.3rem;
+                border-radius: 2rem;
+
+
+                mat-expansion-panel-header {
+
+                    mat-expansion-title {
+                        align-content: center;
+                    }
+                    
+                    mat-panel-description {
+                        max-width: max-content;
+                        
+                        .icon-btn {
+                            height: 1.8rem;
+                            width: 1.8rem;
+                            min-width: 1.8rem;
+                            min-height: 1.8rem;
+                            margin-top: .1rem;
+                            color: color(primary, base);
+                            background-color: color(light, light) !important;
+                            border-radius: 1rem;
+                            display: flex;
+                            align-items: center;
+                    
+                            &:hover{
+                                background-color: color(secondary, light) !important;
+                            }
+                    
+                            &[disabled] {
+                                cursor: not-allowed;
+                                background-color: color(gray) !important;
+                                color: white;
+                                pointer-events: auto !important;
+                                opacity: 1 !important;
+                    
+                                &:hover {
+                                    background-color: color(gray);
+                                    border-color: color(gray);
+                                }
+                            }
+                        }
+                    }
+                    
+                }
+
+                .list-note-block {
+                    background-color: color(light, light);
+                    border-radius: 1rem;
+                }
+            }
+            
+        }
+        
+        
+    }*/
+
+    
+    .separate {
+        display: flex;
+        flex-direction: column;
+        padding: 1rem 1.5rem;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 0.25rem;
+        margin-top: 1rem;
+    
+        h1 {
+            font-size: 1.5rem;
+            text-decoration: underline;
+            text-underline-position: below;
+        }
+    
+    }
+
+    .living-cost-content {
+        display: inherit;
+        flex-wrap: inherit;
+        flex-basis: min-content;
+
+        .living-cost-header {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-end;
+
+            button {
+                margin: 1rem;
+                border-radius: 2rem;
+                height: max-content;
+                width: max-content;
+                padding: .007rem;
+                background-color: color(primary) !important;
+                color: color(light, light);
+
+                &:hover {
+                    background-color: color(secondary) !important;
+                }
+            }
+
+        }
+    }
+
+    .text-container {
+        display: flex;
+    }
+
+    .rating-dynamic-content {
+        display: inherit;
+        flex-direction: row;
+        align-items: flex-end;
+        margin-top: 1.5rem;
+
+        &:nth-child(1) {
+            margin-right: 1rem;
+        }
+
+        &:nth-child(2) {
+            margin-right: 1rem;
+        }
+
+        /*label {
+            color: color(light, light) !important;
+        }*/
+
+        .dynamic-prices {
+            display: inherit;
+            flex-direction: column;
+            border-radius: 1rem;
+            margin-right: 0.5rem;
+            border-color: unset !important;
+        }
+
+        .dynamic-disbursements {
+            display: inherit;
+            flex-direction: column;
+            border-radius: 1rem;
+            margin-right: 0.5rem;
+        }
+
+        .dynamic-funds {
+            display: inherit;
+            flex-direction: column;
+            border-radius: 1rem;
+        }
+    }
+}
+

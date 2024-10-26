@@ -1,0 +1,824 @@
+<div class="card">
+
+    <header>
+        <div class="spinner-container" *ngIf="[gettingLenderData, gettingLoanData].includes(true); else loanFormView">
+            <app-spinner></app-spinner>
+        </div>
+    </header>
+   
+    <ng-template #loanFormView>
+        <mat-toolbar class="loan-form-toolbar">
+            <div class="buttons-container">
+                <ng-container *ngIf="existingApplicationsView == true; else newApplicationButtons">
+                    <!--<button class="btn btn-primary" 
+                        [disabled]="gettingLoanData == true" 
+                        (click)="changeView('New Application')"
+                    > 
+                        Begin New Application
+                    </button>-->
+                    
+                    <div class="loan-count-container">
+                        <button class="loan-add-button"
+                            title="Add a New Application" 
+                            matBadge="+"
+                            matBadgePosition="after" 
+                            matBadgeOverlap="true"
+                            [disabled]="gettingLoanData == true" 
+                            (click)="changeView('New Application')" 
+                        >
+                            <mat-icon>
+                                    description
+                            </mat-icon>
+                        </button>
+                    </div>
+                    
+                    <button class="btn btn-primary" (click)="submitLoanForm(currentLoanApplication.id)" [disabled]="loanForm.status === 'INVALID'">
+                        Submit Changes
+                    </button>
+                </ng-container>
+                
+                <ng-template #newApplicationButtons>
+                    <!--<button class="btn btn-primary"
+                        [disabled]="gettingLoanData == true" (click)="changeView(1);"
+                    > 
+                        View Current Applications       
+                    </button>-->
+
+                    <div class="loan-count-container">
+                        <button class="loan-count-button"
+                            title="View Existing Applications" 
+                            matBadge="{{existingLoanApplications.length}}"
+                            matBadgePosition="after" 
+                            matBadgeOverlap="true"
+                            [disabled]="gettingLoanData == true || existingLoanApplications.length < 1"
+                            (click)="changeView('Current Applications')" 
+                        >
+                            <mat-icon>
+                                    description
+                            </mat-icon>
+                        </button>
+                    </div>
+                        
+                    <button class="btn btn-primary" (click)="submitLoanForm()" [disabled]="loanForm.status === 'INVALID'">
+                        Submit New Application
+                    </button>
+                    <!--<mat-icon matBadge="{{existingLoanApplications.length}}"
+                        matBadgePosition="after"
+                    >
+                        save
+                    </mat-icon>-->
+                </ng-template>          
+            </div>
+        </mat-toolbar>
+
+        <div id="existingApplicationsView" *ngIf="existingApplicationsView == true">
+            <mat-tab-group
+                animationDuration="0ms"
+                (selectedTabChange)="populateGeneralFormData($event.index)"
+            >
+                <ng-container *ngFor="let existingLoanApplication of existingLoanApplications">
+                    <mat-tab [label]="existingLoanApplication.lenderName">
+                        <div class="separate">
+                            <h1>
+                                Current Application: {{existingLoanApplication.lenderName}}
+                            </h1>
+                        </div>
+
+                        <form [formGroup]="loanForm" class="dynamic-form">
+
+                            <ng-container *ngFor="let input of loanInputs">
+                                <app-select-input *ngIf="input.type == 'select'"
+                                    [data]="input"
+                                    [parentForm]="loanForm"
+                                ></app-select-input>
+                    
+                                <ng-container *ngIf="['text', 'number'].includes(input.type)">
+                                    <app-text-input *ngIf="['studentIdWithLender', 'loanTerm'].includes(input.name)"
+                                        [data]="input"
+                                        [parentForm]="loanForm"
+                                    ></app-text-input>
+                    
+                                    <!--<app-text-input *ngIf="['totalFundsFromLender', 'requiredDeposit'].includes(input.name)"
+                                        [data]="input"
+                                        [parentForm]="loanForm"
+                                        (blur)="onBlur($event)"
+                                    ></app-text-input>-->
+            
+                                    <div class="input-container"
+                                        *ngIf="['totalFundsFromLender', 'requiredDeposit'].includes(input.name)">
+            
+                                        <label [for]="input.text" *ngIf="input.text">
+                                            {{ input.text }}
+                                            <span class="obligatory" *ngIf="input.optional === false">*</span>
+                                        </label>
+                                        <div>
+                                            <input
+                                                (blur)="formatAsCurrency()"
+                                                [formControlName]="input.name"
+                                                [id]="input.name"
+                                                [name]="input.name"
+                                                [type]="input.type"
+                                                autocomplete="off"
+                                                [placeholder]="input.placeholder"
+                                            />
+                                        </div>
+                                                
+                                        <p class="error-message" *ngIf="loanForm.get(input.name).invalid && loanForm.get(input.name).touched">   
+                                            <span *ngIf="loanForm.get(input.name).errors?.required">
+                                                Required field
+                                            </span>
+                                        </p>
+                                    </div>
+                                </ng-container>
+                    
+                                <ng-container *ngIf="input.type == 'date' ">
+                                    <app-date-input *ngIf="input.name !== 'livingAssistanceDate'"
+                                        [data]="input"
+                                        [parentForm]="loanForm"
+                                    ></app-date-input>
+                    
+                                    <!--<app-date-input #stipendDate 
+                                        *ngIf="input.name === 'livingAssistanceDate' && input.optional == false"
+                                        [data]="input"
+                                        [parentForm]="loanForm"
+                                    ></app-date-input>-->
+                                </ng-container>
+                                
+                                <!--<app-select-input *ngIf="input.type == 'multiple' "
+                                    [data]="input"
+                                    [multiple]="input.type === 'multiple' "
+                                    [parentForm]="loanForm"
+                                    (changeOptionEmmiter)="processRatingOptions($event)"
+                                ></app-select-input>-->
+
+                                <div class="input-container" *ngIf="input.type == 'multiple' ">
+                                    <label *ngIf="input.text" [for]="input.name">
+                                        {{ input.text }}
+                                        <span class="obligatory" *ngIf="input.optional === false">*</span>                                        
+                                    </label>
+
+                                    <mat-select
+                                        (selectionChange)="processRatingOptions($event.value)"
+                                        [disabled]="getExistingLoanData || gettingLenderData"
+                                        [multiple]="input.type == 'multiple'"
+                                        autocomplete="off"
+                                        [formControlName]="input.name"
+                                        [title]="input.name"
+                                        [class.invalid]="loanForm.get(input.name).invalid && loanForm.get(input.name).touched"
+                                    >
+
+                                        <mat-option *ngFor="let option of input.options"
+                                            [value]="option.id"
+                                            [disabled]="option?.disabled"
+                                        >
+                                            {{ option.text }}
+                                        </mat-option>
+                                    </mat-select>
+
+                                    <p class="error-message" *ngIf="loanForm.get(input.name).invalid && loanForm.get(input.name).touched">
+                                        <span>Required field</span>
+                                    </p>
+                                </div>
+                    
+                                <app-text-area *ngIf="input.type == 'textarea' "
+                                    [data]="input"
+                                    [parentForm]="loanForm"
+                                    [rows]="'4'"
+                                ></app-text-area>
+                            </ng-container>
+            
+                            
+                            <div class="living-cost-content">
+                                <ng-container *ngFor="let input of loanInputs">
+                                    <div class="living-cost-header" *ngIf="input.type == 'checkbox' ">                      
+                                        <div class="input-container">
+                                            <mat-checkbox class="checkbox-input"
+                                                (change)="onStipendVerification($event.checked)"
+                                                [checked]="loanForm.value[input.name]"
+                                            >
+                                                {{ input.text }}
+                                            </mat-checkbox>
+                                        </div>
+                
+                                        <button class="material-icons icon-btn enable-requirement-icon" title="Add Living Disbursement Date"
+                                            *ngIf="checkboxChecked == true"
+                                            (click)="addLivingDisbursementDate()"> add 
+                                        </button> 
+                                    </div>
+                
+                                    <!--<app-text-input #stipendTotal 
+                                        *ngIf="input.name === 'livingAssistanceTotal' && input.optional == false"
+                                        [data]="input"
+                                        [parentForm]="loanForm"
+                                        (blur)="formatAsCurrency()"                 
+                                    ></app-text-input>-->
+
+                                    <div class="input-container"
+                                        *ngIf="input.name == 'livingAssistanceTotal' && !loanForm.get(input.name).disabled">
+
+                                        <label [for]="input.text" *ngIf="input.text">
+                                            {{ input.text }}
+                                            <span class="obligatory">*</span>
+                                        </label>
+
+                                        <input
+                                            [formControlName]="input.name"
+                                            [id]="input.name"
+                                            [name]="input.name"
+                                            [type]="input.type"
+                                            autocomplete="off"
+                                            [placeholder]="input.placeholder"
+                                            (blur)="formatAsCurrency(this.loanForm.get(input.name))"
+                                        />
+                                    
+                                        <p class="error-message" *ngIf="loanForm.get(input.name).invalid && loanForm.get(input.name).touched">   
+                                            <span *ngIf="loanForm.get(input.name).errors?.required">
+                                                Required field
+                                            </span>
+                                        </p>
+                                    </div>
+                                </ng-container>
+                                
+                                <div class="input-container date-input" formArrayName="livingAssistanceDates"
+                                    *ngFor="let livingAssistanceDateControl of livingAssistanceDateControls.controls; let livingAssistanceDateControlIndex = index">
+                                    <ng-container *ngIf="livingAssistanceDateControl.livingDisbursementDateObject.optional === false">
+                                        <label *ngIf="livingAssistanceDateControl.livingDisbursementDateObject.text" [for]="livingAssistanceDateControl.livingDisbursementDateObject.text" matSuffix>
+                                            {{ livingAssistanceDateControl.livingDisbursementDateObject.text }}
+                                            <span class="obligatory">*</span>
+                                        </label>
+            
+                                        <div class="date-input-container">
+                                            <input matInput
+                                                title="date"
+                                                type="text"
+                                                [disabled]="gettingLoanData == true"
+                                                [formControl]="livingAssistanceDateControl"
+                                                [id]="livingAssistanceDateControl.livingDisbursementDateObject.text" 
+                                                [matDatepicker]="picker" 
+                                                [placeholder]="livingAssistanceDateControl.livingDisbursementDateObject.placeholder">
+                                            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                                            <mat-datepicker [disabled]="gettingLoanData == true" #picker></mat-datepicker>
+                                        </div>
+                                    </ng-container>
+            
+                                    <p class="error-message" *ngIf="livingAssistanceDateControl.invalid && livingAssistanceDateControl.touched">
+                                        <span *ngIf="!livingAssistanceDateControl.value">Required field</span>
+                                    </p>
+            
+                                </div>
+                                
+                                    <!--<app-date-input #stipendDate
+                                        *ngIf="livingDisbursementDateObjects[livingAssistanceDateControlIndex].optional == false"        
+                                        [data]="livingDisbursementDateObjects[livingAssistanceDateControlIndex]"
+                                        [parentForm]="loanForm"
+                                    ></app-date-input>-->
+            
+                                    
+                                    <!--<input type="date" [formControl]="livingAssistanceDateControl">-->
+                            </div>
+            
+                            <div class="rating-dynamic-content">
+                                <div class="dynamic-prices">
+                                    <div class="input-container" formArrayName="ratingControlObjects" *ngFor="let ratingPriceControl of ratingPriceControls; let ratingPriceControlIndex = index">
+                                        <!--<app-text-input
+                                            [data]="dynamicRatingObject.ratingPrice"
+                                            [parentForm]="loanForm"
+                                            [currencyFormatting]="true"               
+                                        ></app-text-input>-->
+                
+                                        <label *ngIf="ratingPriceControl.ratingPriceObject.text" [for]="ratingPriceControl.ratingPriceObject.name">
+                                            {{ ratingPriceControl.ratingPriceObject.text }}
+                                            <span class="obligatory" *ngIf="ratingPriceControl.ratingPriceObject.optional === false">*</span>
+                                        </label>
+                                        
+                                        <input
+                                            [formControl]="ratingPriceControl"
+                                            [placeholder]="ratingPriceControl.ratingPriceObject.placeholder"
+                                            [id]="ratingPriceControl.ratingPriceObject.name"
+                                            [type]="ratingPriceControl.ratingPriceObject.type"
+                                            autocomplete="off"
+                                            [disabled]="gettingLoanData == true"
+                                            (focus)="assignCurrentValue(ratingPriceControl)"
+                                            (blur)="formatAsCurrency(ratingPriceControl)"
+                                        />
+                                    </div>
+                                </div>
+                                
+                                
+                                <div class="dynamic-disbursements">
+                                    <div class="input-container" formArrayName="ratingControlObjects" *ngFor="let ratingDisbursementControl of ratingDisbursementControls; let ratingDisbursementControlIndex = index">
+                                        <!--<app-text-input
+                                            [data]="dynamicRatingObject.ratingDisbursement"
+                                            [parentForm]="loanForm"
+                                            [currencyFormatting]="true"
+                                        ></app-text-input>-->
+                
+                                        <label *ngIf="ratingDisbursementControl.ratingDisbursementObject.text" [for]="ratingDisbursementControl.ratingDisbursementObject.name">
+                                            {{ ratingDisbursementControl.ratingDisbursementObject.text }}
+                                            <span class="obligatory" *ngIf="ratingDisbursementControl.ratingDisbursementObject.optional === false">*</span>
+                                        </label>
+                                        
+                                        <input
+                                            [formControl]="ratingDisbursementControl"
+                                            [placeholder]="ratingDisbursementControl.ratingDisbursementObject.placeholder"
+                                            [id]="ratingDisbursementControl.ratingDisbursementObject.name"
+                                            [type]="ratingDisbursementControl.ratingDisbursementObject.type"
+                                            autocomplete="off"
+                                            [disabled]="gettingLoanData == true"
+                                            (focus)="assignCurrentValue(ratingDisbursementControl)"
+                                            (blur)="formatAsCurrency(ratingDisbursementControl)" 
+                                            
+                                        />
+                                    </div>
+                                </div>
+            
+                                
+                                <div class="dynamic-funds">
+                                    <div class="input-container date-input" formArrayName="ratingControlObjects" *ngFor="let ratingDisbursementDateControl of ratingDisbursementDateControls; let ratingDisbursementDateControlIndex = index">
+                                        <!--<app-date-input
+                                            [data]="dynamicRatingObject.ratingDisbursementDate"
+                                            [parentForm]="loanForm"
+                                        ></app-date-input>-->
+            
+                                        <label *ngIf="ratingDisbursementDateControl.ratingDisbursementDateObject.text" [for]="ratingDisbursementDateControl.ratingDisbursementDateObject.text" matSuffix>
+                                            {{ ratingDisbursementDateControl.ratingDisbursementDateObject.text }}
+                                            <span class="obligatory" *ngIf="ratingDisbursementDateControl.ratingDisbursementDateObject.optional === false">*</span>
+                                        </label>
+            
+                                        <div class="date-input-container">
+                                            <input matInput
+                                                title="date"
+                                                type="text"
+                                                [disabled]="gettingLoanData == true"
+                                                [formControl]="ratingDisbursementDateControl"
+                                                [id]="ratingDisbursementDateControl.ratingDisbursementDateObject.name" 
+                                                [matDatepicker]="picker" 
+                                                [placeholder]="ratingDisbursementDateControl.ratingDisbursementDateObject.placeholder">
+                                            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                                            <mat-datepicker [disabled]="gettingLoanData == true" #picker></mat-datepicker>
+                                        </div>
+            
+                                        <p class="error-message" *ngIf="ratingDisbursementDateControl.invalid && ratingDisbursementDateControl.touched">
+                                            <span *ngIf="!ratingDisbursementDateControl.value">Required field</span>
+                                        </p>
+                                    </div>
+                                </div>  
+                            </div>     
+                            <!--BEGINNING OF DYNAMIC INPUT FIELDS-->
+                            <!--<div class="rating-dynamic-content" 
+                                *ngFor="let dynamicRatingObject of dynamicRatingObjects; let i=index"
+                            >
+                                <div class="dynamic-prices">
+                                    <app-text-input
+                                        [data]="dynamicRatingObject.ratingPrice"
+                                        [parentForm]="loanForm"
+                                        [currencyFormatting]="true"               
+                                    ></app-text-input>
+                                </div>
+                                
+                                <div class="dynamic-disbursements">
+                                    <app-text-input
+                                        [data]="dynamicRatingObject.ratingDisbursement"
+                                        [parentForm]="loanForm"
+                                        [currencyFormatting]="true"
+                                    ></app-text-input>
+                                </div>
+                                
+                                <div class="dynamic-funds">
+                                    <app-date-input
+                                        [data]="dynamicRatingObject.ratingDisbursementDate"
+                                        [parentForm]="loanForm"
+                                    ></app-date-input>
+                                </div>   
+                            </div>-->
+                            <!--<div class="rating-dynamic-content">
+                                <div class="dynamic-prices">
+                                        <app-text-input *ngFor="let ratingPriceInput of ratingPriceInputs; let ratingPriceInputIndex = index"
+                                            [data]="ratingPriceInput"
+                                            [parentForm]="loanForm"
+                                            [currencyFormatting]="true"
+                                            [@slideInOut]="ratingPriceInput[index]"
+                                        ></app-text-input>                
+                                </div>
+                                <div class="dynamic-disbursements">
+                                        <app-text-input *ngFor="let ratingDisbursementInput of ratingDisbursementInputs; let ratingDisbursementInputIndex = index"
+                                            [data]="ratingDisbursementInput"
+                                            [parentForm]="loanForm"
+                                            [currencyFormatting]="true"
+                                        ></app-text-input>                
+                                </div>
+                                <div class="dynamic-funds">
+                                        <app-date-input *ngFor="let ratingDisbursementDate of ratingDisbursementDates; let ratingDisbursementDateIndex = index"
+                                            [data]="ratingDisbursementDate"
+                                            [parentForm]="loanForm"
+                                        ></app-date-input>
+                                </div>
+                            </div>-->
+                            <!--END OF DYNAMIC INPUT FIELDS-->
+                            
+                        </form>
+
+                    </mat-tab>
+                </ng-container>  
+            </mat-tab-group>
+        </div>
+        
+        <div id="newApplicationView" *ngIf="existingApplicationsView == false">
+            <div class="separate">
+                <h1>
+                    New Application
+                </h1>
+            </div>
+
+            <form [formGroup]="loanForm" class="dynamic-form">
+
+                <ng-container *ngFor="let input of loanInputs">
+                    <app-select-input *ngIf="input.type == 'select'"
+                        [data]="input"
+                        [parentForm]="loanForm"
+                    ></app-select-input>
+        
+                    <ng-container *ngIf="['text', 'number'].includes(input.type)">
+                        <app-text-input *ngIf="['studentIdWithLender', 'loanTerm'].includes(input.name)"
+                            [data]="input"
+                            [parentForm]="loanForm"
+                        ></app-text-input>
+        
+                        <!--<app-text-input *ngIf="['totalFundsFromLender', 'requiredDeposit'].includes(input.name)"
+                            [data]="input"
+                            [parentForm]="loanForm"
+                            (blur)="onBlur($event)"
+                        ></app-text-input>-->
+
+                        <div class="input-container"
+                            [formGroup]="loanForm"
+                            *ngIf="['totalFundsFromLender', 'requiredDeposit'].includes(input.name)">
+
+                            <label [for]="input.text" *ngIf="input.text">
+                                {{ input.text }}
+                                <span class="obligatory" *ngIf="input.optional === false">*</span>
+                            </label>
+                            <div>
+                                <input
+                                    [formControlName]="input.name"
+                                    [id]="input.name"
+                                    [name]="input.name"
+                                    [type]="input.type"
+                                    autocomplete="off"
+                                    [placeholder]="input.placeholder"
+                                    (blur)="formatAsCurrency()"
+                                />
+                            </div>
+                                    
+                            <p class="error-message" *ngIf="loanForm.get(input.name).invalid && loanForm.get(input.name).touched">   
+                                <span *ngIf="loanForm.get(input.name).errors?.required">
+                                    Required field
+                                </span>
+                            </p>
+                        </div>
+                    </ng-container>
+        
+                    <ng-container *ngIf="input.type == 'date' ">
+                        <app-date-input *ngIf="input.name !== 'livingAssistanceDates'"
+                            [data]="input"
+                            [parentForm]="loanForm"
+                        ></app-date-input>
+        
+                        <!--<app-date-input #stipendDate 
+                            *ngIf="input.name === 'livingAssistanceDate' && input.optional == false"
+                            [data]="input"
+                            [parentForm]="loanForm"
+                        ></app-date-input>-->
+                    </ng-container>
+                    
+                    <app-select-input *ngIf="input.type == 'multiple' "
+                        [data]="input"
+                        [multiple]="input.type === 'multiple' "
+                        [parentForm]="loanForm"
+                        (changeOptionEmmiter)="processRatingOptions($event)"
+                    ></app-select-input>
+        
+                    <app-text-area *ngIf="input.type == 'textarea' "
+                        [data]="input"
+                        [parentForm]="loanForm"
+                        [rows]="'4'"
+                    ></app-text-area>
+                </ng-container>
+
+                
+                <div class="living-cost-content">
+                    <ng-container *ngFor="let input of loanInputs">
+                        <div class="living-cost-header" *ngIf="input.type == 'checkbox' ">
+                            <div class="input-container">
+                                <mat-checkbox class="checkbox-input"
+                                    (change)="onStipendVerification($event.checked)"
+                                    [checked]="loanForm.value[input.name]"
+                                >
+                                    {{ input.text }}
+                                </mat-checkbox>
+                            </div>
+    
+                            <button class="material-icons icon-btn enable-requirement-icon" title="Add Living Disbursement Date"
+                                *ngIf="checkboxChecked == true"
+                                (click)="addLivingDisbursementDate()" > add 
+                            </button> 
+                        </div>
+    
+                        <!--<app-text-input #stipendTotal 
+                            *ngIf="input.name === 'livingAssistanceTotal' && input.optional == false"
+                            [data]="input"
+                            [parentForm]="loanForm"
+                            (blur)="formatAsCurrency()"                  
+                        ></app-text-input>-->
+
+                        <div class="input-container"
+                            [formGroup]="loanForm"
+                            *ngIf="input.name === 'livingAssistanceTotal' && !loanForm.get(input.name).disabled">
+
+                            <label [for]="input.text" *ngIf="input.text">
+                                {{ input.text }}
+                                <span class="obligatory" *ngIf="input.optional === false">*</span>
+                            </label>
+
+                            <input
+                                [formControlName]="input.name"
+                                [id]="input.name"
+                                [name]="input.name"
+                                [type]="input.type"
+                                autocomplete="off"
+                                [placeholder]="input.placeholder"
+                                (blur)="formatAsCurrency(this.loanForm.get(input.name))"
+                            />
+                                    
+                            <p class="error-message" *ngIf="loanForm.get(input.name).invalid && loanForm.get(input.name).touched">   
+                                <span *ngIf="loanForm.get(input.name).errors?.required">
+                                    Required field
+                                </span>
+                            </p>
+                        </div>
+                    </ng-container>
+                    
+                    <div class="input-container date-input" 
+                        *ngFor="let livingAssistanceDateControl of livingAssistanceDateControls.controls; let i =index">
+                            <label *ngIf="livingAssistanceDateControl.livingDisbursementDateObject.text" [for]="livingAssistanceDateControl.livingDisbursementDateObject.text" matSuffix>
+                                {{ livingAssistanceDateControl.livingDisbursementDateObject.text }}
+                                <span class="obligatory">*</span>
+                            </label>
+
+                            <div class="date-input-container">
+                                <input matInput
+                                    type="text"
+                                    [disabled]="gettingLoanData == true"
+                                    [formControl]="livingAssistanceDateControl"
+                                    [id]="livingAssistanceDateControl.livingDisbursementDateObject.text" 
+                                    [matDatepicker]="picker" 
+                                    [placeholder]="livingAssistanceDateControl.livingDisbursementDateObject.placeholder">
+                                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                                <mat-datepicker [disabled]="gettingLoanData == true" #picker></mat-datepicker>
+                            </div>
+
+                        <p class="error-message" *ngIf="livingAssistanceDateControl.invalid && livingAssistanceDateControl.touched">
+                            <span *ngIf="!livingAssistanceDateControl.value">Required field</span>
+                        </p>
+
+                    </div>
+                    
+                        <!--<app-date-input #stipendDate
+                            *ngIf="livingDisbursementDateObjects[livingAssistanceDateControlIndex].optional == false"        
+                            [data]="livingDisbursementDateObjects[livingAssistanceDateControlIndex]"
+                            [parentForm]="loanForm"
+                        ></app-date-input>-->
+
+                        
+                        <!--<input type="date" [formControl]="livingAssistanceDateControl">-->
+                </div>
+
+                <div class="rating-dynamic-content">
+                    <div class="dynamic-prices">
+                        <div class="input-container" *ngFor="let ratingPriceControl of ratingPriceControls; let ratingPriceControlIndex = index">
+                            <!--<app-text-input
+                                [data]="dynamicRatingObject.ratingPrice"
+                                [parentForm]="loanForm"
+                                [currencyFormatting]="true"               
+                            ></app-text-input>-->
+    
+                            <label *ngIf="ratingPriceControl.ratingPriceObject.text" [for]="ratingPriceControl.ratingPriceObject.name">
+                                {{ ratingPriceControl.ratingPriceObject.text }}
+                                <span class="obligatory" *ngIf="ratingPriceControl.ratingPriceObject.optional === false">*</span>
+                            </label>
+                            
+                            <input
+                                [formControl]="ratingPriceControl"
+                                [placeholder]="ratingPriceControl.ratingPriceObject.placeholder"
+                                [id]="ratingPriceControl.ratingPriceObject.name"
+                                [type]="ratingPriceControl.ratingPriceObject.type"
+                                autocomplete="off"
+                                [disabled]="gettingLoanData == true"
+                                (focus)="assignCurrentValue(ratingPriceControl)"
+                                (blur)="formatAsCurrency(ratingPriceControl)"
+                            />
+                        </div>
+                    </div>
+                    
+                    
+                    <div class="dynamic-disbursements">
+                        <div class="input-container" *ngFor="let ratingDisbursementControl of ratingDisbursementControls; let ratingDisbursementControlIndex = index">
+                            <!--<app-text-input
+                                [data]="dynamicRatingObject.ratingDisbursement"
+                                [parentForm]="loanForm"
+                                [currencyFormatting]="true"
+                            ></app-text-input>-->
+    
+                            <label *ngIf="ratingDisbursementControl.ratingDisbursementObject.text" [for]="ratingDisbursementControl.ratingDisbursementObject.name">
+                                {{ ratingDisbursementControl.ratingDisbursementObject.text }}
+                                <span class="obligatory" *ngIf="ratingDisbursementControl.ratingDisbursementObject.optional === false">*</span>
+                            </label>
+                            
+                            <input
+                                [formControl]="ratingDisbursementControl"
+                                [placeholder]="ratingDisbursementControl.ratingDisbursementObject.placeholder"
+                                [id]="ratingDisbursementControl.ratingDisbursementObject.name"
+                                [type]="ratingDisbursementControl.ratingDisbursementObject.type"
+                                autocomplete="off"
+                                [disabled]="gettingLoanData == true"
+                                (focus)="assignCurrentValue(ratingDisbursementControl)"
+                                (blur)="formatAsCurrency(ratingDisbursementControl)"
+                            />
+                        </div>
+                    </div>
+
+                    
+                    <div class="dynamic-funds">
+                        <div class="input-container date-input" *ngFor="let ratingDisbursementDateControl of ratingDisbursementDateControls; let ratingDisbursementDateControlIndex = index">
+                            <!--<app-date-input
+                                [data]="dynamicRatingObject.ratingDisbursementDate"
+                                [parentForm]="loanForm"
+                            ></app-date-input>-->
+
+                            <label *ngIf="ratingDisbursementDateControl.ratingDisbursementDateObject.text" [for]="ratingDisbursementDateControl.ratingDisbursementDateObject.text" matSuffix>
+                                {{ ratingDisbursementDateControl.ratingDisbursementDateObject.text }}
+                                <span class="obligatory" *ngIf="ratingDisbursementDateControl.ratingDisbursementDateObject.optional === false">*</span>
+                            </label>
+
+                            <div class="date-input-container">
+                                <input matInput
+                                    title="date"
+                                    type="text"
+                                    [disabled]="gettingLoanData == true"
+                                    [formControl]="ratingDisbursementDateControl"
+                                    [id]="ratingDisbursementDateControl.ratingDisbursementDateObject.name" 
+                                    [matDatepicker]="picker" 
+                                    [placeholder]="ratingDisbursementDateControl.ratingDisbursementDateObject.placeholder">
+                                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                                <mat-datepicker [disabled]="gettingLoanData == true" #picker></mat-datepicker>
+                            </div>
+
+                            <p class="error-message" *ngIf="ratingDisbursementDateControl.invalid && ratingDisbursementDateControl.touched">
+                                <span *ngIf="!ratingDisbursementDateControl.value">Required field</span>
+                            </p>
+                        </div>
+                    </div>
+                       
+                </div>     
+                <!--BEGINNING OF DYNAMIC INPUT FIELDS-->
+                <!--<div class="rating-dynamic-content" 
+                    *ngFor="let dynamicRatingObject of dynamicRatingObjects; let i=index"
+                >
+                    <div class="dynamic-prices">
+                        <app-text-input
+                            [data]="dynamicRatingObject.ratingPrice"
+                            [parentForm]="loanForm"
+                            [currencyFormatting]="true"               
+                        ></app-text-input>
+                    </div>
+                    
+                    <div class="dynamic-disbursements">
+                        <app-text-input
+                            [data]="dynamicRatingObject.ratingDisbursement"
+                            [parentForm]="loanForm"
+                            [currencyFormatting]="true"
+                        ></app-text-input>
+                    </div>
+                    
+                    <div class="dynamic-funds">
+                        <app-date-input
+                            [data]="dynamicRatingObject.ratingDisbursementDate"
+                            [parentForm]="loanForm"
+                        ></app-date-input>
+                    </div>   
+                </div>-->
+                <!--<div class="rating-dynamic-content">
+                    <div class="dynamic-prices">
+                            <app-text-input *ngFor="let ratingPriceInput of ratingPriceInputs; let ratingPriceInputIndex = index"
+                                [data]="ratingPriceInput"
+                                [parentForm]="loanForm"
+                                [currencyFormatting]="true"
+                                [@slideInOut]="ratingPriceInput[index]"
+                            ></app-text-input>                
+                    </div>
+                    <div class="dynamic-disbursements">
+                            <app-text-input *ngFor="let ratingDisbursementInput of ratingDisbursementInputs; let ratingDisbursementInputIndex = index"
+                                [data]="ratingDisbursementInput"
+                                [parentForm]="loanForm"
+                                [currencyFormatting]="true"
+                            ></app-text-input>                
+                    </div>
+                    <div class="dynamic-funds">
+                            <app-date-input *ngFor="let ratingDisbursementDate of ratingDisbursementDates; let ratingDisbursementDateIndex = index"
+                                [data]="ratingDisbursementDate"
+                                [parentForm]="loanForm"
+                            ></app-date-input>
+                    </div>
+                </div>-->
+                <!--END OF DYNAMIC INPUT FIELDS-->
+                
+            </form>
+        </div>
+
+        <!-- Notes thread and details -->
+        <!--<div class="input-container">
+            <span id="add-note-container">
+                    
+                <button *ngIf="event.id" class="material-icons icon-btn enable-requirement-icon" title="Add note"
+                (click)="addNote();" [disabled]="notes.trim()===''"> add </button>
+            </span>
+            <label for="notes" *ngIf="event.arrayNotes.length > 0" style="margin-top: 1rem;">Notes thread</label>
+            <div class="note-thread" *ngFor="let note of event.arrayNotes">
+                <p class="input-note"><strong>{{ note.noteBy }} </strong> ({{note.createdAt | date: 'MM/dd/yyyy - HH:mm'}})</p>
+                <p class="input-note showCopy" title="click to copy note" (click) = copyNotes(note.notes)>{{ note.notes }}</p>
+            </div>-->
+            <!--<div class="event-info-details" *ngIf="event.id">
+                <label for="event-details" style="margin-top: 1.5rem;">Loan Log</label>
+                <p class="input-note" *ngIf="event.createdBy">
+                    <strong>Created by:</strong>
+                    {{ event.createdBy }} / ({{event.createdAt | date: 'MM/dd/yyyy - HH:mm'}})
+                </p>
+                <p class="input-note" *ngIf="event.checkOutBy">
+                    <strong>Released by:</strong>
+                    {{ event.checkOutBy }}
+                </p>
+                <p class="input-note" *ngIf="event.checkInBy">
+                    <strong>Checked in by:</strong>
+                    {{ event.checkInBy }}
+                </p>
+                <p class="input-note" *ngIf="event.cancelledBy">
+                    <strong>Cancelled by:</strong>
+                    {{ event.cancelledBy }}
+                </p>
+                <ng-container *ngFor="let log of eventsLog; let index = index;">
+                    <p class="input-note" *ngIf="log.action == 0">
+                        <strong>Log {{index}}) Created as:</strong>
+                        {{ log.client_id == '' ? 'No Client,' : 'Client: '+log.client_id+','}} {{ log.instructor_id == '' ? 'No CFI,' : 'CFI: '+log.instructor_id+','}}
+                        {{ log.equipment_id == '' ? 'No Equipment,' : 'Equipment: '+log.equipment_id+','}}
+                        {{ log.syllabus_lesson_id == '' ? 'No Lesson,' : 'Lesson: '+log.syllabus_lesson_id+','}}
+                        {{ log.name == null ? 'No Name,' : 'Name: '+log.name+','}}
+                        {{ log.syllabus_lesson_type_id+', ' }}
+                        {{ 'Start: '+log.start+', ' }}
+                        {{ log.end == '0000-00-00 00:00:00' ? '' : 'End: '+log.end}} / By: {{log.user_id}} on {{ log.created_at | date: 'MM/dd/yyyy - HH:mm'}}
+                    </p>
+                    <p class="input-note" *ngIf="log.action == 2">
+                        <strong>Log {{index}}) CFI Updated To:</strong>
+                        {{ log.instructor_id }} / By: {{log.user_id}} on {{ log.created_at | date: 'MM/dd/yyyy - HH:mm'}}
+                    </p>
+                    <p class="input-note" *ngIf="log.action == 3">
+                        <strong>Log {{index}}) Start Date Updated To:</strong>
+                            {{ log.start }} / By: {{log.user_id}} on {{ log.created_at | date: 'MM/dd/yyyy - HH:mm'}}
+                    </p>
+                    <p class="input-note" *ngIf="log.action == 4">
+                        <strong>Log {{index}}) Client Updated To:</strong>
+                        {{ log.client_id }} / By: {{log.user_id}} on {{ log.created_at | date: 'MM/dd/yyyy - HH:mm'}}
+                    </p>
+                    <p class="input-note" *ngIf="log.action == 5">
+                        <strong>Log {{index}}) Equipment Updated To:</strong>
+                        {{ log.equipment_id }} / By: {{log.user_id}} on {{ log.created_at | date: 'MM/dd/yyyy - HH:mm'}}
+                    </p>
+                    <p class="input-note" *ngIf="log.action == 6">
+                        <strong>Log {{index}}) Reservation Type Update To:</strong>
+                        {{ log.syllabus_lesson_type_id }} / By: {{log.user_id}} on {{ log.created_at | date: 'MM/dd/yyyy - HH:mm'}}
+                    </p>
+                    <p class="input-note" *ngIf="log.action == 7">
+                        <strong>Log {{index}}) Lesson Updated To:</strong>
+                        {{ log.syllabus_lesson_id }} / By: {{log.user_id}} on {{ log.created_at | date: 'MM/dd/yyyy - HH:mm'}}
+                    </p>
+                    <p class="input-note" *ngIf="log.action == 8">
+                        <strong>Log {{index}}) End Date Updated To:</strong>
+                        {{ log.end }} / By: {{log.user_id}} on {{ log.created_at | date: 'MM/dd/yyyy - HH:mm'}}
+                    </p>
+                    <p class="input-note" *ngIf="log.action == 9">
+                        <strong>Log {{index}}) Name Updated To:</strong>
+                        {{ log.name }} / By: {{log.user_id}} on {{ log.created_at | date: 'MM/dd/yyyy - HH:mm'}}
+                    </p>
+                    <p class="input-note" *ngIf="log.action == 10">
+                        <strong>Log {{index}}) DPE Updated To:</strong>
+                        {{ log.dpe }} / By: {{log.user_id}} on {{ log.created_at | date: 'MM/dd/yyyy - HH:mm'}}
+                    </p>
+                </ng-container>
+            </div>
+        </div>--> 
+    </ng-template>
+    
+     
+</div>
+
+
+
